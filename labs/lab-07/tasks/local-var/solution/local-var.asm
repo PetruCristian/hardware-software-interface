@@ -1,4 +1,4 @@
-%include "../utils/printf32.asm"
+%include "../utils/printf64.asm"
 
 section .data
 
@@ -16,91 +16,98 @@ extern printf
 global main
 
 main:
-    mov ebp, esp
-    sub esp, 4 * ARRAY_1_LEN
-    mov eax, esp
-    mov edx, 0
-array_1_on_stack:
-    mov ecx, [array_1 + 4 * edx]
-    mov [eax], ecx
-    inc edx
-    add eax, 4
-    cmp edx, ARRAY_1_LEN
-    jl array_1_on_stack
-    mov eax, esp
+    push rbp
+    mov rbp, rsp
 
-    sub esp, 4 * ARRAY_2_LEN
-    mov ebx, esp
-    mov edx, 0
+    sub rsp, 4 * ARRAY_1_LEN
+    and rsp, -16  ;; Align the stack to 16 bytes
+    mov rax, rsp
+    mov rdx, 0
+array_1_on_stack:
+    mov ecx, [array_1 + 4 * rdx]
+    mov [rax], ecx
+    inc rdx
+    add rax, 4
+    cmp rdx, ARRAY_1_LEN
+    jl array_1_on_stack
+    mov rax, rsp
+
+    sub rsp, 4 * ARRAY_2_LEN
+    and rsp, -16  ;; Align the stack to 16 bytes
+    mov rbx, rsp
+    mov rdx, 0
 array_2_on_stack:
-    mov ecx, [array_2 + 4 * edx]
-    mov [ebx], ecx
-    inc edx
-    add ebx, 4
-    cmp edx, ARRAY_2_LEN
+    mov ecx, [array_2 + 4 * rdx]
+    mov [rbx], ecx
+    inc rdx
+    add rbx, 4
+    cmp rdx, ARRAY_2_LEN
     jl array_2_on_stack
-    mov ebx, esp
-    sub esp, 4 * ARRAY_OUTPUT_LEN
-    mov ecx, esp
+    mov rbx, rsp
+    sub rsp, 4 * ARRAY_OUTPUT_LEN
+    and rsp, -16  ;; Align the stack to 16 bytes
+    mov rcx, rsp
 
 merge_arrays:
-    mov edx, [eax]
-    cmp edx, [ebx]
+    mov edx, [rax]
+    cmp edx, [rbx]
     jg array_2_lower
 array_1_lower:
-    mov [ecx], edx  ; The element from array_1 is lower
-    add eax, 4
-    add ecx, 4
+    mov [rcx], edx  ; The element from array_1 is lower
+    add rax, 4
+    add rcx, 4
     jmp verify_array_end
 array_2_lower:
-    mov edx, [ebx]
-    mov [ecx], edx  ; The elements of the array_2 is lower
-    add ebx, 4
-    add ecx, 4
+    mov edx, [rbx]
+    mov [rcx], edx  ; The elements of the array_2 is lower
+    add rbx, 4
+    add rcx, 4
 
 verify_array_end:
-    mov edx, ebp
-    cmp eax, edx
+    mov rdx, rbp
+    cmp rax, rdx
     jge copy_array_2
-    sub edx, 4 * ARRAY_1_LEN
-    cmp ebx, ebp
+    sub rdx, 4 * ARRAY_1_LEN
+    cmp rbx, rbp
     jge copy_array_1
     jmp merge_arrays
 
 copy_array_1:
-    xor edx, edx
-    mov eax, [eax]
-    mov [ecx], edx
-    add ecx, 4
-    add eax, 4
-    cmp eax, ebp
+    xor rdx, rdx
+    mov eax, [rax]
+    mov [rcx], edx
+    add rcx, 4
+    add rax, 4
+    cmp rax, rbp
     jb copy_array_1
     jmp print_array
 copy_array_2:
-    xor edx, edx
-    mov edx, [ebx]
-    mov [ecx], edx
-    add ecx, 4
-    add ebx, 4
-    mov edx, ebp
-    sub edx, 4 * ARRAY_1_LEN
-    cmp ebx, edx
+    xor rdx, rdx
+    mov edx, [rbx]
+    mov [rcx], edx
+    add rcx, 4
+    add rbx, 4
+    mov rdx, rbp
+    sub rdx, 4 * ARRAY_1_LEN
+    cmp rbx, rdx
     jb copy_array_2
 
 print_array:
-    PRINTF32 `Array merged:\n\x0`
-    xor eax, eax
-    xor ecx, ecx
+    PRINTF64 `Array merged:\n\x0`
+    xor rax, rax
+    xor rcx, rcx
 
 print:
-    mov eax, [esp]
-    PRINTF32 `%d \x0`, eax
-    add esp, 4
-    inc ecx
-    cmp ecx, ARRAY_OUTPUT_LEN
+    mov eax, [rsp]
+    PRINTF64 `%d \x0`, rax
+    add rsp, 4
+    inc rcx
+    cmp rcx, ARRAY_OUTPUT_LEN
     jb print
 
-    PRINTF32 `\n\x0`
-    xor eax, eax
-    mov esp, ebp
+    PRINTF64 `\n\x0`
+    xor rax, rax
+    mov rsp, rbp
+
+    leave
     ret
