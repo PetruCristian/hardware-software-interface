@@ -1,4 +1,4 @@
-%include "../utils/printf32.asm"
+%include "../utils/printf64.asm"
 
 section .text
 
@@ -6,17 +6,17 @@ extern printf
 global main
 main:
     ; Numbers are placed in these two registers.
-    mov eax, 1
-    mov ebx, 4
+    mov rax, 1
+    mov rbx, 4
 
-    cmp eax, ebx
+    cmp rax, rbx
     ja print_max
-    push eax
-    push ebx
-    pop eax
-    pop ebx
+    push rax
+    push rbx
+    pop rax
+    pop rbx
 
 print_max:
-    PRINTF32 `Max value is: %d\n\x0`, eax
+    PRINTF64 `Max value is: %d\n\x0`, rax
 
     ret
